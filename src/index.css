@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* @layer utilities {
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+} */
+body {
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* Custom scrollbar for better aesthetics */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
