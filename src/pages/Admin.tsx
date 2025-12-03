@@ -1,29 +1,37 @@
 import React, { useState } from 'react';
-import { Plus, Package, Search, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Package, Search, Edit, Trash2, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button/Button';
 import AddProductModal from '../components/common/Modal/AddProductModal';
-import { PRODUCTS } from '../constants';
+import { useProducts } from '../hooks/useProducts';
 import type { Product } from '../types';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const { products, loading, error, fetchProducts, addProduct, deleteProduct } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddProduct = (newProduct: Product) => {
-    setProducts(prev => [newProduct, ...prev]);
+  const handleAddProduct = async (newProduct: Product) => {
+    // Product is already added via the modal's onProductAdded callback
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = async (id: number) => {
     if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-      setProducts(prev => prev.filter(p => p.id !== id));
+      setDeletingId(id);
+      try {
+        await deleteProduct(id);
+      } catch (error) {
+        alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -47,10 +55,19 @@ const AdminPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setIsAddModalOpen(true)} size="lg">
-              <Plus size={20} className="mr-2" />
-              Thêm Sản Phẩm
-            </Button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchProducts}
+                className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                title="Làm mới"
+              >
+                <RefreshCw size={20} className={loading === 'LOADING' ? 'animate-spin' : ''} />
+              </button>
+              <Button onClick={() => setIsAddModalOpen(true)} size="lg">
+                <Plus size={20} className="mr-2" />
+                Thêm Sản Phẩm
+              </Button>
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -70,7 +87,19 @@ const AdminPage: React.FC = () => {
       {/* Products Table */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {filteredProducts.length > 0 ? (
+          {loading === 'LOADING' && products.length === 0 ? (
+            <div className="text-center py-20">
+              <Loader2 className="mx-auto text-amber-600 mb-4 animate-spin" size={48} />
+              <p className="text-stone-500 font-medium">Đang tải sản phẩm...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <p className="text-red-500 font-medium mb-4">Lỗi: {error}</p>
+              <Button variant="outline" onClick={fetchProducts}>
+                Thử lại
+              </Button>
+            </div>
+          ) : filteredProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-stone-50 border-b border-stone-200">
@@ -133,10 +162,15 @@ const AdminPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteProduct(product.id)}
-                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                            disabled={deletingId === product.id}
+                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors disabled:opacity-50"
                             title="Xóa"
                           >
-                            <Trash2 size={18} />
+                            {deletingId === product.id ? (
+                              <Loader2 size={18} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={18} />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -161,7 +195,7 @@ const AdminPage: React.FC = () => {
       <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onProductAdded={handleAddProduct}
+        onProductAdded={addProduct}
       />
     </div>
   );

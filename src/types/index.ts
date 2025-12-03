@@ -7,6 +7,9 @@ export interface Product {
   image: string;
   description: string;
   category: 'cotton' | 'linen' | 'silk' | 'synthetic';
+  stock?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem extends Product {
@@ -14,4 +17,11 @@ export interface CartItem extends Product {
 }
 
 export type LoadingState = 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
 

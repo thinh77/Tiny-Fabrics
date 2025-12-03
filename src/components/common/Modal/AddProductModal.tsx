@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { X, Upload, Plus, Loader2 } from 'lucide-react';
 import Button from '../Button/Button';
+import { productService, CreateProductData } from '../../../services/product.service';
 import type { Product } from '../../../types';
 
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onProductAdded: (product: Product) => void;
+  onProductAdded: (productData: CreateProductData) => Promise<Product>;
 }
 
 const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onProductAdded }) => {
@@ -18,55 +19,64 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onPr
     size: '',
     material: '',
     image: '',
+    stock: '10',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+    setError(null);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      category: 'cotton',
+      size: '',
+      material: '',
+      image: '',
+      stock: '10',
+    });
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Simulate API call - replace with actual API call later
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newProduct: Product = {
-        id: Date.now(),
+      const productData: CreateProductData = {
         name: formData.name,
         description: formData.description,
         price: parseInt(formData.price),
-        category: formData.category as Product['category'],
+        category: formData.category,
         size: formData.size,
         material: formData.material,
         image: formData.image || 'https://picsum.photos/400/400',
+        stock: parseInt(formData.stock) || 10,
       };
 
-      onProductAdded(newProduct);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        category: 'cotton',
-        size: '',
-        material: '',
-        image: '',
-      });
-      
+      await onProductAdded(productData);
+      resetForm();
       onClose();
-    } catch (error) {
-      console.error('Failed to add product:', error);
-      alert('Không thể thêm sản phẩm. Vui lòng thử lại.');
+    } catch (err) {
+      console.error('Failed to add product:', err);
+      setError(err instanceof Error ? err.message : 'Không thể thêm sản phẩm. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -75,19 +85,25 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onPr
     <>
       <div 
         className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b border-stone-200 p-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-stone-800">Thêm Sản Phẩm Mới</h2>
             <button 
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 hover:bg-stone-100 rounded-full transition-colors"
             >
               <X size={24} />
             </button>
           </div>
+
+          {error && (
+            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div>
@@ -218,7 +234,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onPr
               <Button
                 type="button"
                 variant="ghost"
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1"
                 disabled={isSubmitting}
               >

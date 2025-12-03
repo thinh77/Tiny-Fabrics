@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Scissors, Search, Filter, Menu, X, Minus, Plus, Trash2, Settings } from 'lucide-react';
+import { ShoppingBag, Scissors, Search, Filter, Menu, X, Minus, Plus, Trash2, Settings, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../components/layout/Hero';
 import Footer from '../components/layout/Footer';
 import ProductCard from '../components/common/Card/ProductCard';
-import { PRODUCTS, CATEGORIES } from '../constants';
+import { CATEGORIES } from '../constants';
+import { useProducts } from '../hooks/useProducts';
 import type { Product, CartItem } from '../types/index';
 import Button from '../components/common/Button/Button';
 
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
+    const { products, loading, error, fetchProducts } = useProducts();
     
     // State
     const [activeCategory, setActiveCategory] = useState('all');
@@ -28,7 +30,7 @@ const HomePage: React.FC = () => {
     }, []);
 
     // Filter Logic
-    const filteredProducts = PRODUCTS.filter(product => {
+    const filteredProducts = products.filter(product => {
         const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             product.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -155,7 +157,23 @@ const HomePage: React.FC = () => {
                     </div>
 
                     {/* Product Grid */}
-                    {filteredProducts.length > 0 ? (
+                    {loading === 'LOADING' ? (
+                        <div className="text-center py-20">
+                            <Loader2 className="mx-auto text-amber-600 mb-4 animate-spin" size={48} />
+                            <p className="text-stone-500 font-medium">Đang tải sản phẩm...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-20 bg-red-50 rounded-2xl border border-dashed border-red-200">
+                            <p className="text-red-500 font-medium mb-4">Không thể tải sản phẩm: {error}</p>
+                            <Button
+                                variant="outline"
+                                onClick={fetchProducts}
+                                className="text-red-600 border-red-600"
+                            >
+                                Thử lại
+                            </Button>
+                        </div>
+                    ) : filteredProducts.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {filteredProducts.map(product => (
                                 <ProductCard
