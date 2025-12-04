@@ -21,6 +21,13 @@ export interface CreateProductData {
 
 export interface UpdateProductData extends Partial<CreateProductData> {}
 
+export interface UploadResponse {
+  filename: string;
+  url: string;
+  size: number;
+  mimetype: string;
+}
+
 export const productService = {
   // Get all products
   async getAllProducts(): Promise<Product[]> {
@@ -73,5 +80,14 @@ export const productService = {
     if (!response.success) {
       throw new Error(response.error || 'Failed to delete product');
     }
+  },
+
+  // Upload image
+  async uploadImage(file: File): Promise<UploadResponse> {
+    const response = await api.uploadFile<ApiResponse<UploadResponse>>('/upload', file);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to upload image');
+    }
+    return response.data;
   },
 };
