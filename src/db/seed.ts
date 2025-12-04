@@ -1,9 +1,20 @@
 import { db } from '../db';
-import { products, categories } from '../db/schema';
+import { products, categories, users } from '../db/schema';
+import bcrypt from 'bcryptjs';
 
 export async function seedDatabase() {
   try {
     console.log('🌱 Seeding database...');
+
+    // Seed admin user
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    await db.insert(users).values({
+      email: 'admin@tinyfabrics.com',
+      password: adminPassword,
+      name: 'Admin',
+      role: 'admin',
+    }).onConflictDoNothing();
+    console.log('✅ Admin user seeded (admin@tinyfabrics.com / admin123)');
 
     // Seed categories
     const categoryData = [
